@@ -87,7 +87,7 @@ void outputmatrix(float** mas, int n, int m, char *filename)
 	for (i = 0; i < n; i++)
 	{
 		for (j = 0; j < m; j++)
-			fprintf(f, "%.1f ", mas[i][j]);
+			fprintf(f, "%.1f\n ", mas[i][j]);
 		fprintf(f, "\n ");
 	}
 	fclose(f);
@@ -122,6 +122,8 @@ float** fast_multiplication(float** mas1, float** mas2, int n1, int m1, int m2)
 				_mas3[j] += f * _mas2[j];
 		}
 	}
+
+	mas3[0][0] = 0;
 	return mas3;
 }
 

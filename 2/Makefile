@@ -1,3 +1,3 @@
 all:
-	icc -fasm-blocks -openmp matrix.c
+	icc -fasm-blocks -static-intel -openmp matrix.c
 	./a.out

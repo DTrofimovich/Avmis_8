@@ -30,3 +30,13 @@
 
 # Debug files
 *.dSYM/
+
+
+#first lab files
+asm
+simple
+auto-vectorize
+
+
+#vectorization report
+*.optrpt

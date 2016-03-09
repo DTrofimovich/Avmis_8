@@ -23,7 +23,8 @@ void main()
 
 	srand(time(0));
 	omp_set_dynamic(0);
-	omp_set_num_threads(omp_get_max_threads());
+	int thread = 2;//omp_get_max_threads();
+	omp_set_num_threads(thread);
 	n1 = 2000;
 	m1 = 500;
 	n2 = m1;
@@ -38,25 +39,25 @@ void main()
 	mas3 = vectorize_multiplication(mas1, mas2, n1, m1, m2);
 	time_end = clock();
 	printf("auto-vectorize: %lf sec\n", (double)(time_end - time_begin)/CLOCKS_PER_SEC);
-	outputmatrix(mas3, n1, m2, "auto-vectorize");
+	//outputmatrix(mas3, n1, m2, "auto-vectorize");
 
 	time_begin = clock();
 	mas3 = asm_multiplication(mas1, mas2_with_transposition, n1, m1, m2);
 	time_end = clock();
 	printf("asm-vectorize: %lf sec\n", (double)(time_end - time_begin)/CLOCKS_PER_SEC);
-	outputmatrix(mas3, n1, m2, "asm");
+	//outputmatrix(mas3, n1, m2, "asm");
 
 	time_begin = clock();
-	mas3 = vectorize_multiplication(mas1, mas2, n1, m1, m2);
+	mas3 = parallel_vectorize_multiplication(mas1, mas2, n1, m1, m2);
 	time_end = clock();
-	printf("parallel auto-vectorize: %lf sec\n", (double)(time_end - time_begin)/CLOCKS_PER_SEC);
-	outputmatrix(mas3, n1, m2, "auto-vectorize");
+	printf("parallel auto-vectorize: %lf sec\n", (double)(time_end - time_begin)/CLOCKS_PER_SEC/thread);
+	//outputmatrix(mas3, n1, m2, "auto-vectorize");
 
 	time_begin = clock();
-	mas3 = asm_multiplication(mas1, mas2_with_transposition, n1, m1, m2);
+	mas3 = parallel_asm_multiplication(mas1, mas2_with_transposition, n1, m1, m2);
 	time_end = clock();
-	printf("parallel asm-vectorize: %lf sec\n", (double)(time_end - time_begin)/CLOCKS_PER_SEC);
-	outputmatrix(mas3, n1, m2, "asm");
+	printf("parallel asm-vectorize: %lf sec\n", (double)(time_end - time_begin)/CLOCKS_PER_SEC/thread);
+	//outputmatrix(mas3, n1, m2, "asm");
 	return;
 }
 
@@ -197,18 +198,16 @@ float** parallel_asm_multiplication(float** mas1, float** mas2, int n1, int m1, 
 	float** mas3 = allocation(n1, m2);
 	float *ms1, *ms2, result;
 	float *end_loop;
-	#pragma omp parallel shared(mas3, mas2, mas1) private(i, j)
+	#pragma omp parallel shared(mas3, mas2, mas1) private(i, j, result, end_loop)
 	{
 		#pragma omp for
 		for (i = 0; i < n1; i++)
 			for (j = 0; j < m2; j++)
 			{
 				result = 0;
-				mas3[i][j] = 0;
-				ms1 = mas1[i];
-				ms2 = mas2[j];
+				float *ms1 = mas1[i];
+				float *ms2 = mas2[j];
 				end_loop = &mas1[i][m1];
-
 				__asm{
 					mov rax, ms1
 					mov rbx, ms2
@@ -235,6 +234,6 @@ float** parallel_asm_multiplication(float** mas1, float** mas2, int n1, int m1, 
 
 				mas3[i][j] = result;
 			}
-	}
+		}
 	return mas3;	
 }
